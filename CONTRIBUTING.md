@@ -8,10 +8,11 @@ This project uses [uv](https://github.com/astral-sh/uv).
 uv sync
 ```
 
-Install the pre-commit hooks so lint, formatting, type checking, and unit tests run automatically before each commit:
+Install the pre-commit and pre-push hooks:
 
 ```
 uv run pre-commit install
+uv run pre-commit install --hook-type pre-push
 ```
 
 ## Pre-commit checks
@@ -23,6 +24,16 @@ uv run pre-commit run --all-files
 ```
 
 Type checking uses [ty](https://github.com/astral-sh/ty), Astral's type checker. It is still in early preview, so expect rough edges; if it becomes a blocker, `basedpyright` is a mature drop-in alternative already available in this environment.
+
+## Pre-push checks
+
+Every push runs the full test suite (unit and integration together, so Docker is required), enforces at least 80% combined statement coverage, and builds the package (sdist and wheel) to catch packaging issues before they would surface as a broken PyPI release. Run it manually at any time:
+
+```
+uv run pre-commit run --hook-stage pre-push --all-files
+```
+
+Coverage is measured across unit and integration tests together, not unit tests alone — the Redis backend is only exercised by integration tests, so a unit-only run sits well under 80%. This is intentional: the fast unit-only gate stays fast, and the full coverage bar is enforced where Docker is already required.
 
 ## Tests
 

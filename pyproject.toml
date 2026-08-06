@@ -26,6 +26,7 @@ dev = [
     "pre-commit>=4.6.1",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "ruff>=0.16.1",
     "testcontainers[redis]>=4.0",
     "ty>=0.0.69",
@@ -38,6 +39,12 @@ addopts = "-m 'not integration'"
 markers = [
     "integration: requires Docker to run a real backend via testcontainers",
 ]
+
+[tool.coverage.run]
+source = ["src/agentevents"]
+
+[tool.coverage.report]
+fail_under = 80
 
 [tool.ruff]
 target-version = "py313"

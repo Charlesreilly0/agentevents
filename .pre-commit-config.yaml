@@ -4,7 +4,9 @@ repos:
     hooks:
       - id: ruff-check
         args: [--fix]
+        stages: [pre-commit]
       - id: ruff-format
+        stages: [pre-commit]
 
   - repo: local
     hooks:
@@ -14,6 +16,7 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+        stages: [pre-commit]
 
       - id: pytest
         name: pytest (unit tests)
@@ -21,3 +24,20 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+        stages: [pre-commit]
+
+      - id: pytest-integration-coverage
+        name: pytest (unit + integration, coverage >= 80%)
+        entry: uv run pytest -m "" --cov=agentevents --cov-report=term-missing --cov-fail-under=80
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]
+
+      - id: build
+        name: build (sdist + wheel)
+        entry: uv build
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
