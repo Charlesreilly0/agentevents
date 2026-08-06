@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 
 from pydantic import TypeAdapter
 
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 class _InMemorySubscription:
     def __init__(
         self,
-        bus: "InMemoryEventBus",
+        bus: InMemoryEventBus,
         pattern: str,
         *,
         payload_type: type[PayloadT],
@@ -50,7 +52,7 @@ class _InMemorySubscription:
         self._active = False
         self._bus._remove_subscription(self)
 
-    async def __aenter__(self) -> "_InMemorySubscription":
+    async def __aenter__(self) -> Self:
         return self
 
     async def __aexit__(
@@ -61,7 +63,7 @@ class _InMemorySubscription:
     ) -> None:
         await self.unsubscribe()
 
-    def __aiter__(self) -> "_InMemorySubscription":
+    def __aiter__(self) -> Self:
         return self
 
     async def __anext__(self) -> Event[Any]:

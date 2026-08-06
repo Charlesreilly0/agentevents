@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import asyncio
 import logging
 from types import TracebackType
-from typing import Any
+from typing import Any, Self
 
 import redis.asyncio as redis_asyncio
 import redis.exceptions as redis_exceptions
@@ -20,7 +22,7 @@ DEFAULT_CHANNEL = "agentevents:events"
 class _RedisSubscription:
     def __init__(
         self,
-        bus: "RedisEventBus",
+        bus: RedisEventBus,
         pattern: str,
         *,
         payload_type: type[PayloadT],
@@ -55,7 +57,7 @@ class _RedisSubscription:
         self._active = False
         self._bus._remove_subscription(self)
 
-    async def __aenter__(self) -> "_RedisSubscription":
+    async def __aenter__(self) -> Self:
         await self._bus._ensure_listener()
         return self
 
@@ -67,7 +69,7 @@ class _RedisSubscription:
     ) -> None:
         await self.unsubscribe()
 
-    def __aiter__(self) -> "_RedisSubscription":
+    def __aiter__(self) -> Self:
         return self
 
     async def __anext__(self) -> Event[Any]:

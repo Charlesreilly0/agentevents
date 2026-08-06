@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from agentevents.exceptions import InvalidEventTypeError
 
 

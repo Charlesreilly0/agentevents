@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from types import TracebackType
-from typing import Any, Protocol
+from typing import Any, Protocol, Self
 
 from agentevents.models import Event, PayloadT
 
@@ -21,7 +23,7 @@ class Subscription(Protocol[PayloadT]):
                 break  # unsubscribe() has already run once this line ends
     """
 
-    async def __aenter__(self) -> "Subscription[PayloadT]": ...
+    async def __aenter__(self) -> Self: ...
 
     async def __aexit__(
         self,
@@ -30,7 +32,7 @@ class Subscription(Protocol[PayloadT]):
         exc_tb: TracebackType | None,
     ) -> None: ...
 
-    def __aiter__(self) -> "Subscription[PayloadT]": ...
+    def __aiter__(self) -> Self: ...
 
     async def __anext__(self) -> Event[PayloadT]: ...
 

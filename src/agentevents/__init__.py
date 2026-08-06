@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from agentevents.bus import EventBus, InMemoryEventBus, RedisEventBus, Subscription
 from agentevents.exceptions import (
     AgentEventsError,
