@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from collections.abc import AsyncIterator
+from types import TracebackType
 from typing import Any
 
 from pydantic import TypeAdapter
@@ -12,11 +12,22 @@ from agentevents.models import Event, PayloadT
 logger = logging.getLogger(__name__)
 
 
-class _Subscription:
-    def __init__(self, pattern: str, queue_size: int) -> None:
+class _InMemorySubscription:
+    def __init__(
+        self,
+        bus: "InMemoryEventBus",
+        pattern: str,
+        *,
+        payload_type: type[PayloadT],
+        queue_size: int,
+    ) -> None:
+        self._bus = bus
         self.pattern = pattern
         self.queue: asyncio.Queue[Event[Any]] = asyncio.Queue(maxsize=queue_size)
         self.dropped = 0
+        self._payload_type = payload_type
+        self._adapter: TypeAdapter[PayloadT] = TypeAdapter(payload_type)
+        self._active = True
 
     def offer(self, event: Event[Any]) -> None:
         try:
@@ -33,6 +44,45 @@ class _Subscription:
             )
             self.queue.put_nowait(event)
 
+    async def unsubscribe(self) -> None:
+        if not self._active:
+            return
+        self._active = False
+        self._bus._remove_subscription(self)
+
+    async def __aenter__(self) -> "_InMemorySubscription":
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        await self.unsubscribe()
+
+    def __aiter__(self) -> "_InMemorySubscription":
+        return self
+
+    async def __anext__(self) -> Event[Any]:
+        while True:
+            event = await self.queue.get()
+            if self._payload_type is dict:
+                return event
+
+            try:
+                payload = self._adapter.validate_python(event.payload)
+            except Exception:
+                logger.warning(
+                    "event %s payload did not match %r, skipping",
+                    event.id,
+                    self._payload_type,
+                    exc_info=True,
+                )
+                continue
+
+            return event.model_copy(update={"payload": payload})
+
 
 class InMemoryEventBus:
     """An EventBus implementation backed by in-process asyncio queues.
@@ -42,42 +92,25 @@ class InMemoryEventBus:
     """
 
     def __init__(self) -> None:
-        self._subscriptions: list[_Subscription] = []
+        self._subscriptions: list[_InMemorySubscription] = []
 
     async def publish(self, event: Event[Any]) -> None:
         for sub in self._subscriptions:
             if matches(sub.pattern, event.event_type):
                 sub.offer(event)
 
-    async def subscribe(
+    def subscribe(
         self,
         pattern: str,
         *,
         payload_type: type[PayloadT] = dict,
         queue_size: int = DEFAULT_QUEUE_SIZE,
-    ) -> AsyncIterator[Event[PayloadT]]:
-        sub = _Subscription(pattern, queue_size)
+    ) -> _InMemorySubscription:
+        sub = _InMemorySubscription(
+            self, pattern, payload_type=payload_type, queue_size=queue_size
+        )
         self._subscriptions.append(sub)
-        adapter: TypeAdapter[PayloadT] = TypeAdapter(payload_type)
+        return sub
 
-        try:
-            while True:
-                event = await sub.queue.get()
-                if payload_type is dict:
-                    yield event
-                    continue
-
-                try:
-                    payload = adapter.validate_python(event.payload)
-                except Exception:
-                    logger.warning(
-                        "event %s payload did not match %r, skipping",
-                        event.id,
-                        payload_type,
-                        exc_info=True,
-                    )
-                    continue
-
-                yield event.model_copy(update={"payload": payload})
-        finally:
-            self._subscriptions.remove(sub)
+    def _remove_subscription(self, sub: _InMemorySubscription) -> None:
+        self._subscriptions.remove(sub)
