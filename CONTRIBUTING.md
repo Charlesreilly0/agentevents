@@ -89,10 +89,10 @@ This project uses trunk-based development: `main` is always the latest working s
 - Branch off `main` for any change: `feat/<short-name>`, `fix/<short-name>`, `chore/<short-name>`, etc.
 - Keep branches short-lived — open a PR as soon as the change is coherent, rather than accumulating unrelated work on one branch.
 - Open a PR against `main` using the PR template. CI must pass (see above).
-- Merge with **squash merge**. Each PR becomes exactly one commit on `main`; the squash commit message should be the PR title, written as a clear summary of the change (this becomes the permanent history and release notes source, so write it accordingly, not as "fix stuff").
-- Delete the branch after merge.
+- Merge with **squash merge** — this is enforced at the repo level; merge commit and rebase merge are disabled, so squash is the only option GitHub offers. The squash commit message defaults to the PR title, which becomes the permanent history and release notes source, so write PR titles as clear summaries of the change, not as "fix stuff."
+- Branches are deleted automatically on merge (also enforced at the repo level).
 
-Branch protection on `main` (PR required, CI checks required, no direct pushes) is documented here as the intended rule but is not yet enabled on GitHub, pending confirmation that push-triggered CI runs are reliable (see the note on the [GitHub Actions incident](https://www.githubstatus.com/) if `push` events aren't triggering runs).
+Branch protection on `main` (PR required, CI checks required, no direct pushes) is documented here as the intended rule but is not yet enabled on GitHub, pending confirmation that push-triggered CI runs are reliable (see the note on the [GitHub Actions incident](https://www.githubstatus.com/) if `push` events aren't triggering runs). The merge-strategy settings above (squash-only, auto-delete) are unrelated to that incident and are already enforced.
 
 ## Versioning and releases
 
