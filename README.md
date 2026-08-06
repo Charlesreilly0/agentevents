@@ -1,5 +1,7 @@
 # agentevents
 
+[![CI](https://github.com/Charlesreilly0/agentevents/actions/workflows/ci.yml/badge.svg)](https://github.com/Charlesreilly0/agentevents/actions/workflows/ci.yml)
+
 A Python library for event-driven communication between agents. Agents publish events to a bus and other agents subscribe to the event types they care about. This is a complement to request/response protocols like A2A, for cases where an agent needs to react to something it did not directly ask for.
 
 ## Installation
