@@ -176,4 +176,4 @@ except EventBusConnectionError:
 
 ## Development
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, running tests, and running the CLI.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, running tests, and running the CLI. See [CHANGELOG.md](CHANGELOG.md) for release history.

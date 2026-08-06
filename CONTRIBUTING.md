@@ -122,14 +122,19 @@ Before 1.0.0, the API may still shift between minor versions as the design settl
 To cut a release:
 
 1. On `main`, bump `version` in `pyproject.toml`.
-2. Commit and push directly (or via PR) as `chore: release vX.Y.Z`.
-3. Tag the commit and push the tag:
+2. In `CHANGELOG.md`, rename the `## [Unreleased]` section to `## [X.Y.Z] - YYYY-MM-DD` and add a fresh empty `## [Unreleased]` section above it. Update the `[Unreleased]` and new version's link references at the bottom of the file.
+3. Commit and push directly (or via PR) as `chore: release vX.Y.Z`.
+4. Tag the commit and push the tag:
 
    ```
    git tag vX.Y.Z
    git push origin vX.Y.Z
    ```
 
-4. Pushing the tag triggers `.github/workflows/release.yml`, which verifies the tag matches `pyproject.toml`'s version, builds the sdist and wheel, and creates a GitHub Release with the build artifacts attached and auto-generated release notes.
+5. Pushing the tag triggers `.github/workflows/release.yml`, which verifies the tag matches `pyproject.toml`'s version, builds the sdist and wheel, and creates a GitHub Release with the build artifacts attached and auto-generated release notes.
 
 Publishing to PyPI is not yet wired up — the release workflow currently stops at a GitHub Release. When ready to publish, add a `pypi-publish` step using [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC-based, no API token stored in the repo).
+
+## Keeping the changelog current
+
+Every PR that changes user-facing behavior (public API, CLI, packaging) should add an entry under `## [Unreleased]` in `CHANGELOG.md`, in the appropriate [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) category (Added, Changed, Fixed, Removed, etc.). Internal-only changes (test refactors, CI tweaks) don't need an entry unless they affect how someone uses or contributes to the library.
