@@ -16,9 +16,7 @@ def validate_pattern(pattern: str) -> None:
     segments = pattern.split(".")
     for i, seg in enumerate(segments):
         if seg == "":
-            raise InvalidEventTypeError(
-                f"pattern {pattern!r} has an empty segment"
-            )
+            raise InvalidEventTypeError(f"pattern {pattern!r} has an empty segment")
         if seg == ">":
             if i != len(segments) - 1:
                 raise InvalidEventTypeError(

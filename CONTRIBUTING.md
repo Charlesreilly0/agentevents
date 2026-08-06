@@ -8,6 +8,22 @@ This project uses [uv](https://github.com/astral-sh/uv).
 uv sync
 ```
 
+Install the pre-commit hooks so lint, formatting, type checking, and unit tests run automatically before each commit:
+
+```
+uv run pre-commit install
+```
+
+## Pre-commit checks
+
+Every commit runs, in order: `ruff check --fix`, `ruff format`, `ty check`, and `uv run pytest` (unit tests only; integration tests are not run automatically since they need Docker). Run the full set manually at any time:
+
+```
+uv run pre-commit run --all-files
+```
+
+Type checking uses [ty](https://github.com/astral-sh/ty), Astral's type checker. It is still in early preview, so expect rough edges; if it becomes a blocker, `basedpyright` is a mature drop-in alternative already available in this environment.
+
 ## Tests
 
 Unit tests do not need Docker and run by default:

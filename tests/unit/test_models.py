@@ -48,7 +48,7 @@ def test_invalid_event_type_cause_is_invalid_event_type_error() -> None:
 
 def test_payload_is_required() -> None:
     with pytest.raises(ValidationError):
-        Event(event_type="deploy.started", source="agent")
+        Event(event_type="deploy.started", source="agent")  # ty: ignore[missing-argument]
 
 
 def test_plain_event_accepts_dict_payload() -> None:

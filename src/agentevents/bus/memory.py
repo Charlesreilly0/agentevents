@@ -38,8 +38,7 @@ class _InMemorySubscription:
             self.queue.get_nowait()
             self.dropped += 1
             logger.warning(
-                "subscriber for pattern %r is falling behind, dropped event %s "
-                "(total dropped: %d)",
+                "subscriber for pattern %r is falling behind, dropped event %s (total dropped: %d)",
                 self.pattern,
                 event.id,
                 self.dropped,
@@ -110,13 +109,11 @@ class InMemoryEventBus:
         self,
         pattern: str,
         *,
-        payload_type: type[PayloadT] = dict,
+        payload_type: type[PayloadT | dict[str, Any]] = dict,
         queue_size: int = DEFAULT_QUEUE_SIZE,
     ) -> _InMemorySubscription:
         validate_pattern(pattern)
-        sub = _InMemorySubscription(
-            self, pattern, payload_type=payload_type, queue_size=queue_size
-        )
+        sub = _InMemorySubscription(self, pattern, payload_type=payload_type, queue_size=queue_size)
         self._subscriptions.append(sub)
         return sub
 

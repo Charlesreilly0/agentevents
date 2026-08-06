@@ -76,9 +76,7 @@ async def test_two_separate_bus_instances_communicate(redis_url: str) -> None:
 
 
 async def test_typed_subscription_coerces_payload(bus: RedisEventBus) -> None:
-    task = asyncio.create_task(
-        _collect(bus, "error_rate.*", 1, payload_type=ErrorRateSpiked)
-    )
+    task = asyncio.create_task(_collect(bus, "error_rate.*", 1, payload_type=ErrorRateSpiked))
     await asyncio.sleep(0.2)
 
     await bus.publish(
@@ -124,9 +122,9 @@ async def test_subscription_cleaned_up_on_break(bus: RedisEventBus) -> None:
 
 async def test_subscriber_count_by_pattern(bus: RedisEventBus) -> None:
     async with (
-        bus.subscribe("deploy.*") as sub_a,
-        bus.subscribe("deploy.*") as sub_b,
-        bus.subscribe("task.*") as sub_c,
+        bus.subscribe("deploy.*") as _sub_a,
+        bus.subscribe("deploy.*") as _sub_b,
+        bus.subscribe("task.*") as _sub_c,
     ):
         await asyncio.sleep(0.2)
         assert bus.subscriber_count() == 3

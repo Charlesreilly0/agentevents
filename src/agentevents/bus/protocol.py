@@ -61,7 +61,7 @@ class EventBus(Protocol):
         self,
         pattern: str,
         *,
-        payload_type: type[PayloadT] = dict,
+        payload_type: type[PayloadT | dict[str, Any]] = dict,
         queue_size: int = DEFAULT_QUEUE_SIZE,
     ) -> Subscription[PayloadT]:
         """

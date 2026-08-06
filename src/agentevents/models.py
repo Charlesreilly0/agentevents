@@ -19,18 +19,13 @@ class Event(BaseModel, Generic[PayloadT]):
     An event emitted by an agent for other agents to consume.
     """
 
-    id: UUID = Field(
-        default_factory=uuid4, 
-        description="Unique identifier for this event."
-    )
-    
+    id: UUID = Field(default_factory=uuid4, description="Unique identifier for this event.")
+
     event_type: str = Field(
         description="Lowercase, dot-namespaced routing key, e.g. 'error_rate.spiked'."
     )
 
-    source: str = Field(
-        description="Identifier of the agent that emitted this event."
-    )
+    source: str = Field(description="Identifier of the agent that emitted this event.")
 
     timestamp: datetime = Field(
         default_factory=lambda: datetime.now(UTC),
@@ -47,9 +42,7 @@ class Event(BaseModel, Generic[PayloadT]):
         description="The id of the event that directly caused this one, for tracing event chains.",
     )
 
-    payload: PayloadT = Field(
-        description="Event-specific data."
-    )
+    payload: PayloadT = Field(description="Event-specific data.")
 
     metadata: dict[str, Any] = Field(
         default_factory=dict,

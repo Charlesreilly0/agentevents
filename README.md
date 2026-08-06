@@ -42,9 +42,11 @@ Fields:
 ```python
 from pydantic import BaseModel
 
+
 class ErrorRateSpiked(BaseModel):
     rate: float
     threshold: float
+
 
 event = Event[ErrorRateSpiked](
     event_type="error_rate.spiked",
@@ -65,10 +67,12 @@ from agentevents import Event, InMemoryEventBus
 
 bus = InMemoryEventBus()
 
+
 async def monitor():
     await bus.publish(
         Event(event_type="error_rate.spiked", source="monitor", payload={"rate": 0.9})
     )
+
 
 async def rollback_agent():
     async with bus.subscribe("error_rate.*") as sub:
@@ -87,15 +91,18 @@ from agentevents import Event, RedisEventBus
 
 bus = RedisEventBus("redis://localhost:6379/0")
 
+
 async def monitor():
     await bus.publish(
         Event(event_type="error_rate.spiked", source="monitor", payload={"rate": 0.9})
     )
 
+
 async def rollback_agent():
     async with bus.subscribe("error_rate.*") as sub:
         async for event in sub:
             print(event.event_type, event.payload)
+
 
 await bus.aclose()  # closes the shared listener connection when done
 ```
@@ -139,8 +146,8 @@ Each subscription has a bounded queue, sized by `queue_size` (default 100). If a
 `bus.subscriber_count()` returns the number of active subscriptions. Pass a pattern to count only subscriptions registered with that exact pattern string.
 
 ```python
-bus.subscriber_count()              # total active subscriptions
-bus.subscriber_count("deploy.*")    # only subscriptions registered with this pattern
+bus.subscriber_count()  # total active subscriptions
+bus.subscriber_count("deploy.*")  # only subscriptions registered with this pattern
 ```
 
 ### Exceptions

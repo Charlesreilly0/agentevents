@@ -43,8 +43,7 @@ class _RedisSubscription:
             self.queue.get_nowait()
             self.dropped += 1
             logger.warning(
-                "subscriber for pattern %r is falling behind, dropped event %s "
-                "(total dropped: %d)",
+                "subscriber for pattern %r is falling behind, dropped event %s (total dropped: %d)",
                 self.pattern,
                 event.id,
                 self.dropped,
@@ -189,7 +188,7 @@ class RedisEventBus:
         self,
         pattern: str,
         *,
-        payload_type: type[PayloadT] = dict,
+        payload_type: type[PayloadT | dict[str, Any]] = dict,
         queue_size: int = DEFAULT_QUEUE_SIZE,
     ) -> _RedisSubscription:
         validate_pattern(pattern)

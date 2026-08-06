@@ -32,7 +32,10 @@ async def test_subscriber_receives_matching_events() -> None:
     await bus.publish(Event(event_type="error_rate.recovered", source="monitor", payload={}))
 
     results = await asyncio.wait_for(task, timeout=1)
-    assert [e.event_type for e in results] == ["error_rate.spiked", "error_rate.recovered"]
+    assert [e.event_type for e in results] == [
+        "error_rate.spiked",
+        "error_rate.recovered",
+    ]
 
 
 async def test_no_subscribers_does_not_raise() -> None:
@@ -68,9 +71,7 @@ async def test_backpressure_drops_oldest() -> None:
 
 async def test_typed_subscription_coerces_payload() -> None:
     bus = InMemoryEventBus()
-    task = asyncio.create_task(
-        _collect(bus, "error_rate.*", 1, payload_type=ErrorRateSpiked)
-    )
+    task = asyncio.create_task(_collect(bus, "error_rate.*", 1, payload_type=ErrorRateSpiked))
     await asyncio.sleep(0.01)
 
     await bus.publish(
@@ -84,9 +85,7 @@ async def test_typed_subscription_coerces_payload() -> None:
 
 async def test_typed_subscription_skips_invalid_payload() -> None:
     bus = InMemoryEventBus()
-    task = asyncio.create_task(
-        _collect(bus, "error_rate.*", 1, payload_type=ErrorRateSpiked)
-    )
+    task = asyncio.create_task(_collect(bus, "error_rate.*", 1, payload_type=ErrorRateSpiked))
     await asyncio.sleep(0.01)
 
     await bus.publish(
@@ -97,7 +96,9 @@ async def test_typed_subscription_skips_invalid_payload() -> None:
     )
 
     results = await asyncio.wait_for(task, timeout=1)
-    assert results[0].payload.rate == 0.4
+    payload = results[0].payload
+    assert isinstance(payload, ErrorRateSpiked)
+    assert payload.rate == 0.4
 
 
 async def test_subscription_cleaned_up_on_break() -> None:
@@ -160,7 +161,11 @@ async def test_subscriber_count_total_and_by_pattern() -> None:
     bus = InMemoryEventBus()
     assert bus.subscriber_count() == 0
 
-    async with bus.subscribe("deploy.*") as sub_a, bus.subscribe("deploy.*") as sub_b, bus.subscribe("task.*") as sub_c:
+    async with (
+        bus.subscribe("deploy.*") as _sub_a,
+        bus.subscribe("deploy.*") as _sub_b,
+        bus.subscribe("task.*") as _sub_c,
+    ):
         assert bus.subscriber_count() == 3
         assert bus.subscriber_count("deploy.*") == 2
         assert bus.subscriber_count("task.*") == 1
@@ -177,8 +182,7 @@ async def test_many_concurrent_publishers_and_subscribers() -> None:
     total_events = num_publishers * events_per_publisher
 
     tasks = [
-        asyncio.create_task(_collect(bus, "load.*", total_events))
-        for _ in range(num_subscribers)
+        asyncio.create_task(_collect(bus, "load.*", total_events)) for _ in range(num_subscribers)
     ]
     await asyncio.sleep(0.01)
     assert bus.subscriber_count() == num_subscribers
