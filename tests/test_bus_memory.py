@@ -112,11 +112,11 @@ async def test_subscription_cleaned_up_on_break() -> None:
 
     task = asyncio.create_task(consume_one())
     await asyncio.sleep(0.01)
-    assert len(bus._subscriptions) == 1
+    assert bus.subscriber_count() == 1
 
     await bus.publish(Event(event_type="deploy.started", source="deployer", payload={}))
     await asyncio.wait_for(task, timeout=1)
-    assert bus._subscriptions == []
+    assert bus.subscriber_count() == 0
 
 
 async def test_subscription_cleaned_up_on_cancel() -> None:
@@ -129,13 +129,13 @@ async def test_subscription_cleaned_up_on_cancel() -> None:
 
     task = asyncio.create_task(consume_forever())
     await asyncio.sleep(0.01)
-    assert len(bus._subscriptions) == 1
+    assert bus.subscriber_count() == 1
 
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
 
-    assert bus._subscriptions == []
+    assert bus.subscriber_count() == 0
 
 
 async def test_unsubscribe_is_idempotent() -> None:
@@ -144,7 +144,7 @@ async def test_unsubscribe_is_idempotent() -> None:
     async with sub:
         pass
     await sub.unsubscribe()
-    assert bus._subscriptions == []
+    assert bus.subscriber_count() == 0
 
 
 async def test_dropped_count_is_visible_on_subscription() -> None:
@@ -153,3 +153,98 @@ async def test_dropped_count_is_visible_on_subscription() -> None:
         for n in range(5):
             await bus.publish(Event(event_type="task.done", source="worker", payload={"n": n}))
         assert sub.dropped == 3
+
+
+async def test_subscriber_count_total_and_by_pattern() -> None:
+    bus = InMemoryEventBus()
+    assert bus.subscriber_count() == 0
+
+    async with bus.subscribe("deploy.*") as sub_a, bus.subscribe("deploy.*") as sub_b, bus.subscribe("task.*") as sub_c:
+        assert bus.subscriber_count() == 3
+        assert bus.subscriber_count("deploy.*") == 2
+        assert bus.subscriber_count("task.*") == 1
+        assert bus.subscriber_count("nothing.matches") == 0
+
+    assert bus.subscriber_count() == 0
+
+
+async def test_many_concurrent_publishers_and_subscribers() -> None:
+    bus = InMemoryEventBus()
+    num_subscribers = 10
+    num_publishers = 5
+    events_per_publisher = 20
+    total_events = num_publishers * events_per_publisher
+
+    tasks = [
+        asyncio.create_task(_collect(bus, "load.*", total_events))
+        for _ in range(num_subscribers)
+    ]
+    await asyncio.sleep(0.01)
+    assert bus.subscriber_count() == num_subscribers
+
+    async def publish_batch(publisher_id: int) -> None:
+        for n in range(events_per_publisher):
+            await bus.publish(
+                Event(
+                    event_type="load.tick",
+                    source=f"publisher-{publisher_id}",
+                    payload={"n": n},
+                )
+            )
+
+    await asyncio.gather(*(publish_batch(i) for i in range(num_publishers)))
+
+    results = await asyncio.gather(*(asyncio.wait_for(t, timeout=2) for t in tasks))
+    for subscriber_results in results:
+        assert len(subscriber_results) == total_events
+
+    assert bus.subscriber_count() == 0
+
+
+async def test_subscriber_that_raises_still_cleans_up() -> None:
+    bus = InMemoryEventBus()
+
+    class BoomError(Exception):
+        pass
+
+    async def consume_and_raise():
+        async with bus.subscribe("deploy.*") as sub:
+            async for _ in sub:
+                raise BoomError
+
+    task = asyncio.create_task(consume_and_raise())
+    await asyncio.sleep(0.01)
+    assert bus.subscriber_count() == 1
+
+    await bus.publish(Event(event_type="deploy.started", source="deployer", payload={}))
+
+    with pytest.raises(BoomError):
+        await asyncio.wait_for(task, timeout=1)
+
+    assert bus.subscriber_count() == 0
+
+
+async def test_one_raising_subscriber_does_not_affect_others() -> None:
+    bus = InMemoryEventBus()
+
+    class BoomError(Exception):
+        pass
+
+    async def bad_subscriber():
+        async with bus.subscribe("deploy.*") as sub:
+            async for _ in sub:
+                raise BoomError
+
+    good_task = asyncio.create_task(_collect(bus, "deploy.*", 1))
+    bad_task = asyncio.create_task(bad_subscriber())
+    await asyncio.sleep(0.01)
+    assert bus.subscriber_count() == 2
+
+    await bus.publish(Event(event_type="deploy.started", source="deployer", payload={}))
+
+    with pytest.raises(BoomError):
+        await asyncio.wait_for(bad_task, timeout=1)
+
+    good_results = await asyncio.wait_for(good_task, timeout=1)
+    assert good_results[0].event_type == "deploy.started"
+    assert bus.subscriber_count() == 0

@@ -105,6 +105,15 @@ async with bus.subscribe("error_rate.*", payload_type=ErrorRateSpiked) as sub:
 
 Each subscription has a bounded queue, sized by `queue_size` (default 100). If a subscriber falls behind the rate of publishing, the oldest buffered event is dropped to make room for the newest one. `publish` never blocks on a slow subscriber. The number of dropped events for a subscription is available on `sub.dropped`.
 
+### Introspection
+
+`bus.subscriber_count()` returns the number of active subscriptions. Pass a pattern to count only subscriptions registered with that exact pattern string.
+
+```python
+bus.subscriber_count()              # total active subscriptions
+bus.subscriber_count("deploy.*")    # only subscriptions registered with this pattern
+```
+
 ## Development
 
 Install dependencies and run tests:

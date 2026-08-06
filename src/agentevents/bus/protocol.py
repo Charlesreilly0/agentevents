@@ -44,6 +44,17 @@ class EventBus(Protocol):
         """Publish an event to all matching subscribers."""
         ...
 
+    def subscriber_count(self, pattern: str | None = None) -> int:
+        """
+        Return the number of active subscriptions.
+
+        If pattern is given, only count subscriptions registered with that
+        exact pattern string. This is a literal match against the pattern
+        a subscriber passed to subscribe(), not a wildcard match against
+        event types.
+        """
+        ...
+
     def subscribe(
         self,
         pattern: str,

@@ -99,6 +99,11 @@ class InMemoryEventBus:
             if matches(sub.pattern, event.event_type):
                 sub.offer(event)
 
+    def subscriber_count(self, pattern: str | None = None) -> int:
+        if pattern is None:
+            return len(self._subscriptions)
+        return sum(1 for sub in self._subscriptions if sub.pattern == pattern)
+
     def subscribe(
         self,
         pattern: str,
