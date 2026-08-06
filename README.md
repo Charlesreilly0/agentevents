@@ -55,7 +55,10 @@ event = Event[ErrorRateSpiked](
 
 ### EventBus
 
-`EventBus` is a protocol with two operations: `publish` and `subscribe`. `InMemoryEventBus` is the current implementation, backed by in-process asyncio queues. It is meant for local development, testing, and single-process use. It does not persist events or share state across processes.
+`EventBus` is a protocol with two operations: `publish` and `subscribe`. Two implementations are provided:
+
+- `InMemoryEventBus`, backed by in-process asyncio queues. Meant for local development, testing, and single-process use. Does not persist events or share state across processes.
+- `RedisEventBus`, backed by Redis Pub/Sub. Multiple bus instances, in the same process or different ones, that point at the same Redis server and channel form one shared bus. Use this when agents run in separate processes or on separate machines.
 
 ```python
 from agentevents import Event, InMemoryEventBus
@@ -74,6 +77,30 @@ async def rollback_agent():
 ```
 
 `subscribe` returns a `Subscription`. Use it as an async context manager. This guarantees the subscription is deregistered from the bus the moment the block exits, whether that is by falling through, by `break`, or by an exception. Do not iterate a `Subscription` outside of an `async with` block, since cleanup then depends on garbage collection timing rather than running immediately.
+
+### RedisEventBus
+
+`RedisEventBus` publishes each event as JSON to a single Redis channel. Every subscriber process receives every published message and filters it locally using the same pattern matching as `InMemoryEventBus`. This keeps the `*` and `>` wildcard grammar and the drop-oldest backpressure behavior identical across both implementations, at the cost of sending every event over the wire to every subscribed process.
+
+```python
+from agentevents import Event, RedisEventBus
+
+bus = RedisEventBus("redis://localhost:6379/0")
+
+async def monitor():
+    await bus.publish(
+        Event(event_type="error_rate.spiked", source="monitor", payload={"rate": 0.9})
+    )
+
+async def rollback_agent():
+    async with bus.subscribe("error_rate.*") as sub:
+        async for event in sub:
+            print(event.event_type, event.payload)
+
+await bus.aclose()  # closes the shared listener connection when done
+```
+
+Redis Pub/Sub is fire-and-forget. Events published before a subscriber's listener has started, or while it is disconnected, are not delivered or replayed. Call `bus.aclose()` when you are done with a bus instance to close its Redis connection and stop its background listener task.
 
 ### Pattern matching
 
@@ -116,11 +143,28 @@ bus.subscriber_count("deploy.*")    # only subscriptions registered with this pa
 
 ## Development
 
-Install dependencies and run tests:
+Install dependencies:
 
 ```
 uv sync
+```
+
+Run unit tests. These do not need Docker and run by default:
+
+```
 uv run pytest
+```
+
+Run integration tests. These use [testcontainers](https://testcontainers.com/) to start a real Redis in Docker, and are excluded from the default run since they need Docker available:
+
+```
+uv run pytest -m integration
+```
+
+If Docker is provided by Colima or another non-default runtime, testcontainers' cleanup container (Ryuk) can fail to start because of how its socket is mounted. If integration tests fail with a Docker mount error, disable Ryuk and clean up containers manually instead:
+
+```
+TESTCONTAINERS_RYUK_DISABLED=true uv run pytest -m integration
 ```
 
 Run the CLI entry point:
