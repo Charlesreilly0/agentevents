@@ -97,6 +97,12 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and eve
 
 This mirrors the local pre-commit/pre-push hooks. The library supports Python 3.13 and later only (see `requires-python` in `pyproject.toml`), since `Event`'s generic payload default relies on `TypeVar(default=...)`, which is only available in the standard `typing` module from Python 3.13 onward.
 
+### Dependency updates
+
+[Dependabot](https://docs.github.com/en/code-security/dependabot) (`.github/dependabot.yml`) opens weekly PRs for outdated dependencies (`uv` ecosystem, covering `pyproject.toml`/`uv.lock`) and GitHub Actions versions used in workflows. This replaces manually checking whether an action tag like `astral-sh/setup-uv@vX` actually exists before bumping it.
+
+Dependabot PRs still need to pass the same CI and review as any other PR before merging. If a Dependabot PR bumps `pyproject.toml` without updating `uv.lock` to match, run `uv sync` locally and push the updated lockfile before merging.
+
 ## Branching and merging
 
 This project uses trunk-based development: `main` is always the latest working state, and there are no long-lived `develop` or `release` branches.
