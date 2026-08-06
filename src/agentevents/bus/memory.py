@@ -6,7 +6,7 @@ from typing import Any
 from pydantic import TypeAdapter
 
 from agentevents.bus.protocol import DEFAULT_QUEUE_SIZE
-from agentevents.matching import matches
+from agentevents.matching import matches, validate_pattern
 from agentevents.models import Event, PayloadT
 
 logger = logging.getLogger(__name__)
@@ -111,6 +111,7 @@ class InMemoryEventBus:
         payload_type: type[PayloadT] = dict,
         queue_size: int = DEFAULT_QUEUE_SIZE,
     ) -> _InMemorySubscription:
+        validate_pattern(pattern)
         sub = _InMemorySubscription(
             self, pattern, payload_type=payload_type, queue_size=queue_size
         )

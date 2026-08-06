@@ -118,6 +118,8 @@ Examples:
 | `*.spiked` | `error_rate.spiked` | `error_rate.recovered` |
 | `deploy.>` | `deploy.started`, `deploy.prod.rollback` | `rollback.started` |
 
+`subscribe` validates the pattern before registering it and raises `InvalidEventTypeError` if it is malformed, for example an empty segment or a `>` that is not the last segment.
+
 ### Typed subscriptions
 
 Pass `payload_type` to `subscribe` to validate and coerce incoming payloads into a specific model. Events whose payload does not match are logged and skipped, not raised, so one malformed event does not stop the subscriber loop.
@@ -139,6 +141,28 @@ Each subscription has a bounded queue, sized by `queue_size` (default 100). If a
 ```python
 bus.subscriber_count()              # total active subscriptions
 bus.subscriber_count("deploy.*")    # only subscriptions registered with this pattern
+```
+
+### Exceptions
+
+All exceptions raised directly by this library are subclasses of `AgentEventsError`.
+
+- `InvalidEventTypeError`: raised when an `event_type` or subscription pattern does not match the required format. Also a `ValueError`, so it is still caught by code that handles `Event` construction failures as `pydantic.ValidationError`.
+- `EventBusConnectionError`: raised by `RedisEventBus` when the Redis server cannot be reached, wrapping the underlying `redis` exception. Lets code written against the `EventBus` protocol handle a down backend without importing backend-specific exception types.
+
+```python
+from agentevents import EventBusConnectionError, InvalidEventTypeError
+
+try:
+    bus.subscribe("bad..pattern")
+except InvalidEventTypeError:
+    ...
+
+try:
+    async with bus.subscribe("deploy.*") as sub:
+        ...
+except EventBusConnectionError:
+    ...
 ```
 
 ## Development

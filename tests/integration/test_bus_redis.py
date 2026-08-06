@@ -4,6 +4,7 @@ import pytest
 from pydantic import BaseModel
 
 from agentevents.bus import RedisEventBus
+from agentevents.exceptions import EventBusConnectionError, InvalidEventTypeError
 from agentevents.models import Event
 
 pytestmark = pytest.mark.integration
@@ -131,3 +132,19 @@ async def test_subscriber_count_by_pattern(bus: RedisEventBus) -> None:
         assert bus.subscriber_count() == 3
         assert bus.subscriber_count("deploy.*") == 2
         assert bus.subscriber_count("task.*") == 1
+
+
+async def test_subscribe_rejects_invalid_pattern(bus: RedisEventBus) -> None:
+    with pytest.raises(InvalidEventTypeError):
+        bus.subscribe("deploy.>.rollback")
+    assert bus.subscriber_count() == 0
+
+
+async def test_unreachable_redis_raises_connection_error() -> None:
+    bus = RedisEventBus("redis://localhost:1/0")
+    try:
+        with pytest.raises(EventBusConnectionError):
+            async with bus.subscribe("deploy.*"):
+                pass
+    finally:
+        await bus.aclose()

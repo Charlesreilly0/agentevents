@@ -5,6 +5,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, field_validator
 
+from agentevents.exceptions import InvalidEventTypeError
+
 EVENT_TYPE_PATTERN = re.compile(r"^[a-z0-9_]+(\.[a-z0-9_]+)+$")
 
 PayloadT = TypeVar("PayloadT", default=dict[str, Any])
@@ -57,7 +59,7 @@ class Event(BaseModel, Generic[PayloadT]):
     @classmethod
     def _validate_event_type(cls, value: str) -> str:
         if not EVENT_TYPE_PATTERN.match(value):
-            raise ValueError(
+            raise InvalidEventTypeError(
                 f"event_type {value!r} must be lowercase, dot-namespaced, "
                 "with at least two segments (e.g. 'error_rate.spiked')"
             )

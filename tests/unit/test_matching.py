@@ -1,6 +1,7 @@
 import pytest
 
-from agentevents.matching import matches
+from agentevents.exceptions import InvalidEventTypeError
+from agentevents.matching import matches, validate_pattern
 
 
 @pytest.mark.parametrize(
@@ -29,3 +30,37 @@ from agentevents.matching import matches
 )
 def test_matches(pattern: str, event_type: str, expected: bool) -> None:
     assert matches(pattern, event_type) is expected
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "error_rate.*",
+        "*.spiked",
+        "deploy.>",
+        ">",
+        "a.b.c",
+        "task_123.done",
+        "*",
+    ],
+)
+def test_validate_pattern_accepts_valid_patterns(pattern: str) -> None:
+    validate_pattern(pattern)
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        "",
+        "deploy.>.rollback",
+        "a..b",
+        ".a",
+        "a.",
+        "Deploy.Started",
+        "a.b c",
+        "a.b-c",
+    ],
+)
+def test_validate_pattern_rejects_invalid_patterns(pattern: str) -> None:
+    with pytest.raises(InvalidEventTypeError):
+        validate_pattern(pattern)

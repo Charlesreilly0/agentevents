@@ -1,6 +1,7 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 
+from agentevents.exceptions import InvalidEventTypeError
 from agentevents.models import Event
 
 
@@ -37,6 +38,12 @@ def test_valid_event_type(event_type: str) -> None:
 def test_invalid_event_type_rejected(event_type: str) -> None:
     with pytest.raises(ValidationError):
         Event(event_type=event_type, source="agent", payload={})
+
+
+def test_invalid_event_type_cause_is_invalid_event_type_error() -> None:
+    with pytest.raises(ValidationError) as exc_info:
+        Event(event_type="bad", source="agent", payload={})
+    assert isinstance(exc_info.value.errors()[0]["ctx"]["error"], InvalidEventTypeError)
 
 
 def test_payload_is_required() -> None:

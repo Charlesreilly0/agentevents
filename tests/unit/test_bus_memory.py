@@ -4,6 +4,7 @@ import pytest
 from pydantic import BaseModel
 
 from agentevents.bus import InMemoryEventBus
+from agentevents.exceptions import InvalidEventTypeError
 from agentevents.models import Event
 
 
@@ -247,4 +248,11 @@ async def test_one_raising_subscriber_does_not_affect_others() -> None:
 
     good_results = await asyncio.wait_for(good_task, timeout=1)
     assert good_results[0].event_type == "deploy.started"
+    assert bus.subscriber_count() == 0
+
+
+async def test_subscribe_rejects_invalid_pattern() -> None:
+    bus = InMemoryEventBus()
+    with pytest.raises(InvalidEventTypeError):
+        bus.subscribe("deploy.>.rollback")
     assert bus.subscriber_count() == 0

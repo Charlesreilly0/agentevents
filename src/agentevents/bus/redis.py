@@ -4,10 +4,12 @@ from types import TracebackType
 from typing import Any
 
 import redis.asyncio as redis_asyncio
+import redis.exceptions as redis_exceptions
 from pydantic import TypeAdapter
 
 from agentevents.bus.protocol import DEFAULT_QUEUE_SIZE
-from agentevents.matching import matches
+from agentevents.exceptions import EventBusConnectionError
+from agentevents.matching import matches, validate_pattern
 from agentevents.models import Event, PayloadT
 
 logger = logging.getLogger(__name__)
@@ -125,9 +127,17 @@ class RedisEventBus:
         async with self._listener_lock:
             if self._listener_task is not None:
                 return
-            self._client = redis_asyncio.from_url(self._redis_url)
-            self._pubsub = self._client.pubsub()
-            await self._pubsub.subscribe(self._channel)
+            client = redis_asyncio.from_url(self._redis_url)
+            pubsub = client.pubsub()
+            try:
+                await pubsub.subscribe(self._channel)
+            except redis_exceptions.RedisError as exc:
+                await client.aclose()
+                raise EventBusConnectionError(
+                    f"could not connect to Redis at {self._redis_url!r}"
+                ) from exc
+            self._client = client
+            self._pubsub = pubsub
             self._listener_task = asyncio.create_task(self._listen())
 
     async def _listen(self) -> None:
@@ -154,10 +164,19 @@ class RedisEventBus:
             client = redis_asyncio.from_url(self._redis_url)
             try:
                 await client.publish(self._channel, event.model_dump_json())
+            except redis_exceptions.RedisError as exc:
+                raise EventBusConnectionError(
+                    f"could not reach Redis at {self._redis_url!r}"
+                ) from exc
             finally:
                 await client.aclose()
         else:
-            await self._client.publish(self._channel, event.model_dump_json())
+            try:
+                await self._client.publish(self._channel, event.model_dump_json())
+            except redis_exceptions.RedisError as exc:
+                raise EventBusConnectionError(
+                    f"could not reach Redis at {self._redis_url!r}"
+                ) from exc
 
     def subscriber_count(self, pattern: str | None = None) -> int:
         if pattern is None:
@@ -171,6 +190,7 @@ class RedisEventBus:
         payload_type: type[PayloadT] = dict,
         queue_size: int = DEFAULT_QUEUE_SIZE,
     ) -> _RedisSubscription:
+        validate_pattern(pattern)
         sub = _RedisSubscription(self, pattern, payload_type=payload_type, queue_size=queue_size)
         self._subscriptions.append(sub)
         return sub
