@@ -143,32 +143,4 @@ bus.subscriber_count("deploy.*")    # only subscriptions registered with this pa
 
 ## Development
 
-Install dependencies:
-
-```
-uv sync
-```
-
-Run unit tests. These do not need Docker and run by default:
-
-```
-uv run pytest
-```
-
-Run integration tests. These use [testcontainers](https://testcontainers.com/) to start a real Redis in Docker, and are excluded from the default run since they need Docker available:
-
-```
-uv run pytest -m integration
-```
-
-If Docker is provided by Colima or another non-default runtime, testcontainers' cleanup container (Ryuk) can fail to start because of how its socket is mounted. If integration tests fail with a Docker mount error, disable Ryuk and clean up containers manually instead:
-
-```
-TESTCONTAINERS_RYUK_DISABLED=true uv run pytest -m integration
-```
-
-Run the CLI entry point:
-
-```
-uv run agentevents
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, running tests, and running the CLI.
