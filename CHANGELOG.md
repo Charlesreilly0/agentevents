@@ -23,7 +23,8 @@ Nothing has been released yet. Everything below is part of the initial, unreleas
 
 ### Documentation
 
-- `README.md` covering `Event`, both `EventBus` implementations, pattern matching, typed subscriptions, backpressure, and the exception hierarchy.
+- `README.md` covering installation and a quickstart, linking into `docs/` for API reference and the backend implementation guide.
+- `docs/api.md`: `Event`, both `EventBus` implementations, pattern matching, typed subscriptions, backpressure, and the exception hierarchy. `docs/backend-guide.md`: what's reusable vs. backend-specific when implementing a new `EventBus`. Synced to the [GitHub wiki](https://github.com/Charlesreilly0/agentevents/wiki) on push to `main` (`.github/workflows/wiki-sync.yml`); `docs/` is the source of truth, the wiki is a generated mirror.
 - `CONTRIBUTING.md` covering setup, pre-commit/pre-push checks, running tests (including the Colima/Ryuk testcontainers workaround), examples, branching and merging (trunk-based, squash-only merges, enforced at the repo level), and the versioning/release process.
 - A pull request template matching the checks the CI pipeline actually runs.
 
