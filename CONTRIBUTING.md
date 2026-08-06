@@ -69,3 +69,15 @@ TESTCONTAINERS_RYUK_DISABLED=true uv run pytest -m integration
 ```
 uv run agentevents
 ```
+
+## Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
+
+- **lint**: `ruff check` and `ruff format --check`
+- **typecheck**: `ty check`
+- **test**: unit tests, matrixed across Python 3.13 and 3.14
+- **integration**: unit and integration tests together with the 80% coverage floor, matrixed across Python 3.13 and 3.14, on Docker-equipped runners
+- **build**: `uv build`, with the resulting sdist and wheel uploaded as a workflow artifact
+
+This mirrors the local pre-commit/pre-push hooks. The library supports Python 3.13 and later only (see `requires-python` in `pyproject.toml`), since `Event`'s generic payload default relies on `TypeVar(default=...)`, which is only available in the standard `typing` module from Python 3.13 onward.
