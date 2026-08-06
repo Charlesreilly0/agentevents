@@ -28,7 +28,7 @@ dev = [
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.16.1",
-    "testcontainers[redis]>=4.0",
+    "testcontainers[redis]>=4.15.0",
     "ty>=0.0.69",
 ]
 examples = [
