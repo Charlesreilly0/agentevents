@@ -70,6 +70,21 @@ TESTCONTAINERS_RYUK_DISABLED=true uv run pytest -m integration
 uv run agentevents
 ```
 
+## Examples
+
+Runnable examples live in `examples/` and depend on things the library itself does not (e.g. `pydantic-ai`), kept in their own `examples` dependency group so they're never installed by default:
+
+```
+uv sync --group examples
+uv run --group examples python examples/<example>.py
+```
+
+`examples/` is excluded from `ty check .` (see `[tool.ty.src] exclude` in `pyproject.toml`), since the default dev environment doesn't have the `examples` group installed and `ty` would otherwise fail to resolve those imports. If you change an example, type-check it explicitly by file (checking the `examples/` directory itself is a no-op, since the exclude glob prunes the whole directory before ty walks it):
+
+```
+uv run --group examples ty check examples/<example>.py
+```
+
 ## Continuous integration
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
