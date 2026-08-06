@@ -81,3 +81,40 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and eve
 - **build**: `uv build`, with the resulting sdist and wheel uploaded as a workflow artifact
 
 This mirrors the local pre-commit/pre-push hooks. The library supports Python 3.13 and later only (see `requires-python` in `pyproject.toml`), since `Event`'s generic payload default relies on `TypeVar(default=...)`, which is only available in the standard `typing` module from Python 3.13 onward.
+
+## Branching and merging
+
+This project uses trunk-based development: `main` is always the latest working state, and there are no long-lived `develop` or `release` branches.
+
+- Branch off `main` for any change: `feat/<short-name>`, `fix/<short-name>`, `chore/<short-name>`, etc.
+- Keep branches short-lived — open a PR as soon as the change is coherent, rather than accumulating unrelated work on one branch.
+- Open a PR against `main` using the PR template. CI must pass (see above).
+- Merge with **squash merge**. Each PR becomes exactly one commit on `main`; the squash commit message should be the PR title, written as a clear summary of the change (this becomes the permanent history and release notes source, so write it accordingly, not as "fix stuff").
+- Delete the branch after merge.
+
+Branch protection on `main` (PR required, CI checks required, no direct pushes) is documented here as the intended rule but is not yet enabled on GitHub, pending confirmation that push-triggered CI runs are reliable (see the note on the [GitHub Actions incident](https://www.githubstatus.com/) if `push` events aren't triggering runs).
+
+## Versioning and releases
+
+This project follows [Semantic Versioning](https://semver.org/): `MAJOR.MINOR.PATCH`.
+
+- **MAJOR**: breaking changes to the public API (`Event`, `EventBus`, `Subscription`, exception types, or their behavior).
+- **MINOR**: new functionality that's backward compatible (a new `EventBus` backend, a new field with a default, a new optional parameter).
+- **PATCH**: backward-compatible bug fixes.
+
+Before 1.0.0, the API may still shift between minor versions as the design settles — treat `0.x` releases as less strictly bound by these rules than `1.x` onward.
+
+To cut a release:
+
+1. On `main`, bump `version` in `pyproject.toml`.
+2. Commit and push directly (or via PR) as `chore: release vX.Y.Z`.
+3. Tag the commit and push the tag:
+
+   ```
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+4. Pushing the tag triggers `.github/workflows/release.yml`, which verifies the tag matches `pyproject.toml`'s version, builds the sdist and wheel, and creates a GitHub Release with the build artifacts attached and auto-generated release notes.
+
+Publishing to PyPI is not yet wired up — the release workflow currently stops at a GitHub Release. When ready to publish, add a `pypi-publish` step using [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC-based, no API token stored in the repo).
