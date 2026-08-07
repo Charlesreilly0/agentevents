@@ -117,7 +117,7 @@ This project uses trunk-based development: `main` is always the latest working s
 - Merge with **squash merge** — this is enforced at the repo level; merge commit and rebase merge are disabled, so squash is the only option GitHub offers. The squash commit message defaults to the PR title, which becomes the permanent history and release notes source, so write PR titles as clear summaries of the change, not as "fix stuff."
 - Branches are deleted automatically on merge (also enforced at the repo level).
 
-Branch protection on `main` (PR required, CI checks required, no direct pushes) is documented here as the intended rule but is not yet enabled on GitHub, pending confirmation that push-triggered CI runs are reliable (see the note on the [GitHub Actions incident](https://www.githubstatus.com/) if `push` events aren't triggering runs). The merge-strategy settings above (squash-only, auto-delete) are unrelated to that incident and are already enforced.
+Branch protection on `main` is enabled: a PR is required, all seven CI check runs must pass and be up to date with `main` (lint, typecheck, unit tests on 3.13/3.14, integration tests on 3.13/3.14, build), and force-pushes/branch deletion are blocked. This was deliberately deferred earlier while GitHub Actions was mid-incident (webhook delivery throttled, so required checks could have gotten stuck pending forever) and enabled once push-triggered runs were confirmed reliable again via the Actions API.
 
 ## Versioning and releases
 

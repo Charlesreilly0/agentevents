@@ -20,6 +20,8 @@ Nothing has been released yet. Everything below is part of the initial, unreleas
 - `examples/pydantic_ai_incident_response.py`, showing two [Pydantic AI](https://ai.pydantic.dev/) agents coordinating through an `InMemoryEventBus` instead of calling each other directly, in a dedicated `examples` dependency group.
 - Unit and integration (Redis via [testcontainers](https://testcontainers.com/)) test suites, pre-commit hooks (ruff, [ty](https://github.com/astral-sh/ty), unit tests) and a pre-push gate (full test suite, 80% combined coverage floor, package build).
 - GitHub Actions CI (lint, type check, unit tests across Python 3.13/3.14, integration tests with coverage, build) and a tag-triggered release workflow that builds the package and creates a GitHub Release.
+- Branch protection on `main`: PR required, all CI check runs required and must be up to date, force-pushes and branch deletion blocked. Squash-only merging and automatic branch deletion on merge enforced at the repo level.
+- Dependabot for `uv`-ecosystem dependencies and GitHub Actions versions, weekly, grouped by dev/non-dev and by all actions respectively, with commit messages matching this project's `type: summary` convention.
 
 ### Documentation
 
