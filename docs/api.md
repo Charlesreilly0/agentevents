@@ -25,6 +25,8 @@ Fields:
 - `payload`: required. The event-specific data.
 - `metadata`: an open dict for protocol or transport level concerns, such as schema version or delivery hints.
 
+See [`examples/causation_chain.py`](https://github.com/Charlesreilly0/agentevents/blob/main/examples/causation_chain.py) for `correlation_id`/`causation_id` in use: three agents reacting to each other in sequence, all sharing one `correlation_id`, each event's `causation_id` pointing at the one before it, reconstructed into a printed chain at the end.
+
 `Event` is generic over the payload type. By default `payload` is a plain dict. You can also give it a Pydantic model for validation:
 
 ```python

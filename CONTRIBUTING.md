@@ -141,9 +141,16 @@ To cut a release:
    git push origin vX.Y.Z
    ```
 
-5. Pushing the tag triggers `.github/workflows/release.yml`, which verifies the tag matches `pyproject.toml`'s version, builds the sdist and wheel, and creates a GitHub Release with the build artifacts attached and auto-generated release notes.
+5. Pushing the tag triggers `.github/workflows/release.yml`: the `release` job verifies the tag matches `pyproject.toml`'s version, builds the sdist and wheel, and creates a GitHub Release with the build artifacts attached and auto-generated release notes. The `publish-pypi` job then downloads those same artifacts and publishes them to PyPI via [Trusted Publishing](https://docs.pypi.org/trusted-publishers/) — OIDC-based, no API token stored in the repo.
 
-Publishing to PyPI is not yet wired up — the release workflow currently stops at a GitHub Release. When ready to publish, add a `pypi-publish` step using [PyPI Trusted Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC-based, no API token stored in the repo).
+### One-time PyPI setup
+
+`publish-pypi` will fail with an authentication error until this is done once, on PyPI's side (not something that can be configured from this repository):
+
+1. On PyPI, either create the `agentevents` project first, or use [pending trusted publishers](https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/) to register a trusted publisher before the project exists yet.
+2. Add a trusted publisher with: repository owner `Charlesreilly0`, repository name `agentevents`, workflow filename `release.yml`, environment name `pypi`.
+
+The `pypi` GitHub Actions environment referenced in `release.yml` is auto-created on first use if it doesn't already exist. Add required reviewers to it (Settings → Environments → `pypi` → Deployment protection rules) if you want a manual approval step before every PyPI publish — publishing a version to PyPI cannot be undone (the same version number can never be re-uploaded), so this is worth doing before the first real release.
 
 ## Keeping the changelog current
 
